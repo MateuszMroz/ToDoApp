@@ -14,11 +14,10 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 
 @Singleton
-class TaskRepository
-@Inject
-constructor(
+class TaskRepository @Inject constructor(
     private val taskDao: TaskDao
 ) : ITaskRepository {
+
     override fun getTasksStream(): Flow<List<Task>> = taskDao.observeAll().map { it.toTasks() }
 
     override suspend fun getTasks(forceUpdate: Boolean): List<Task> = taskDao.getAll().toTasks()
@@ -39,13 +38,12 @@ constructor(
 
     override suspend fun createTask(title: String, description: String): String {
         val taskId = UUID.randomUUID().toString()
-        val task =
-            TaskEntity(
-                id = taskId,
-                title = title,
-                description = description,
-                isCompleted = false
-            )
+        val task = TaskEntity(
+            id = taskId,
+            title = title,
+            description = description,
+            isCompleted = false
+        )
 
         taskDao.upsert(task)
 
@@ -53,11 +51,9 @@ constructor(
     }
 
     override suspend fun updateTask(taskId: String, title: String, description: String) {
-        val task =
-            getTask(taskId)?.copy(
-                title = title,
-                description = description
-            )?.toEntity() ?: throw IllegalStateException("Task (id: $taskId) not found")
+        val task = getTask(taskId)?.copy(
+            title = title, description = description
+        )?.toEntity() ?: throw IllegalStateException("Task (id: $taskId) not found")
 
         taskDao.upsert(task)
     }
