@@ -18,13 +18,18 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.todo.R
+import com.example.todo.feature.ToDoNavGraph
 import com.example.todo.ui.design.RefreshIndicator
 import com.example.todo.ui.design.TaskBackTopBar
 import com.example.todo.ui.theme.ToDoTheme
+import com.ramcosta.composedestinations.annotation.Destination
+import com.ramcosta.composedestinations.navigation.DestinationsNavigator
 
+@ToDoNavGraph
+@Destination
 @Composable
 fun StatisticRoute(
-    onBack: () -> Unit,
+    navigator: DestinationsNavigator,
     modifier: Modifier = Modifier,
     viewModel: StatisticsViewModel = hiltViewModel(),
     scaffoldState: ScaffoldState = rememberScaffoldState()
@@ -34,7 +39,7 @@ fun StatisticRoute(
         scaffoldState = scaffoldState,
         topBar = {
             TaskBackTopBar(
-                onBack = onBack,
+                onBack = { navigator.popBackStack() },
                 title = R.string.statistics_title
             )
         }

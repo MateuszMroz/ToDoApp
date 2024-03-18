@@ -32,15 +32,25 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.todo.R
 import com.example.todo.data.model.Task
+import com.example.todo.feature.ToDoNavGraph
+import com.example.todo.feature.destinations.AddEditTaskRouteDestination
+import com.example.todo.feature.destinations.TasksRouteDestination
 import com.example.todo.ui.design.RefreshIndicator
 import com.example.todo.ui.design.TaskBackTopBar
 import com.example.todo.ui.theme.ToDoTheme
+import com.ramcosta.composedestinations.annotation.Destination
+import com.ramcosta.composedestinations.navigation.DestinationsNavigator
 
+data class TaskDetailsArgs(
+    val taskId: String
+)
+
+@ToDoNavGraph
+@Destination(navArgsDelegate = TaskDetailsArgs::class)
 @Composable
 fun TaskDetailsRoute(
-    onEditTask: (String) -> Unit,
-    onDeleteTask: () -> Unit,
-    onBack: () -> Unit,
+    args: TaskDetailsArgs,
+    navigator: DestinationsNavigator,
     modifier: Modifier = Modifier,
     viewModel: TaskDetailsViewModel = hiltViewModel(),
     scaffoldState: ScaffoldState = rememberScaffoldState()
@@ -53,14 +63,21 @@ fun TaskDetailsRoute(
         topBar = {
             TaskBackTopBar(
                 title = R.string.task_details,
-                onBack = onBack,
+                onBack = { navigator.popBackStack() },
                 actionIcon = Filled.Delete,
                 onActionIconClick = viewModel::deleteTask
             )
         },
         floatingActionButton = {
             if (uiState.task != null) {
-                FloatingActionButton(onClick = { onEditTask(viewModel.taskId) }) {
+                FloatingActionButton(onClick = {
+                    navigator.navigate(
+                        AddEditTaskRouteDestination(
+                            R.string.edit_task,
+                            args.taskId
+                        )
+                    )
+                }) {
                     Icon(Filled.Edit, stringResource(id = R.string.edit_task))
                 }
             }
@@ -86,7 +103,7 @@ fun TaskDetailsRoute(
 
         LaunchedEffect(uiState.isTaskDeleted) {
             if (uiState.isTaskDeleted) {
-                onDeleteTask()
+                navigator.navigate(TasksRouteDestination(userMessage = R.string.successfully_deleted_task_message))
             }
         }
     }
@@ -153,7 +170,6 @@ private fun TaskDetailsScreen(
                             color = Color.Black,
                             fontSize = 16.sp
                         )
-                        // modifier = Modifier.padding(8.dp)
                     )
                 }
             }

@@ -37,14 +37,26 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.todo.R
+import com.example.todo.feature.ToDoNavGraph
+import com.example.todo.feature.destinations.TasksRouteDestination
+import com.example.todo.feature.util.ADD_RESULT_OK
+import com.example.todo.feature.util.EDIT_RESULT_OK
 import com.example.todo.ui.design.TaskBackTopBar
 import com.example.todo.ui.theme.ToDoTheme
+import com.ramcosta.composedestinations.annotation.Destination
+import com.ramcosta.composedestinations.navigation.DestinationsNavigator
 
+data class AddEditTaskArgs(
+    @StringRes val title: Int,
+    val taskId: String? = null
+)
+
+@ToDoNavGraph
+@Destination(navArgsDelegate = AddEditTaskArgs::class)
 @Composable
 fun AddEditTaskRoute(
-    @StringRes topBarTitle: Int,
-    onBack: () -> Unit,
-    onTaskUpdate: () -> Unit,
+    args: AddEditTaskArgs,
+    navigator: DestinationsNavigator,
     modifier: Modifier = Modifier,
     viewModel: AddEditTaskViewModel = hiltViewModel(),
     scaffoldState: ScaffoldState = rememberScaffoldState()
@@ -52,7 +64,7 @@ fun AddEditTaskRoute(
     Scaffold(
         modifier = modifier.fillMaxSize(),
         scaffoldState = scaffoldState,
-        topBar = { TaskBackTopBar(title = topBarTitle, onBack = onBack) },
+        topBar = { TaskBackTopBar(title = args.title, onBack = { navigator.popBackStack() }) },
         floatingActionButton = {
             FloatingActionButton(onClick = viewModel::saveTask) {
                 Icon(
@@ -62,6 +74,7 @@ fun AddEditTaskRoute(
             }
         }
     ) { paddingValues ->
+
         val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
         AddEditTaskScreen(
@@ -71,8 +84,7 @@ fun AddEditTaskRoute(
             onTitleChanged = viewModel::onTitleChanged,
             onDescriptionChanged = viewModel::onDescriptionChanged,
             onActionDone = viewModel::saveTask,
-            modifier =
-            modifier
+            modifier = modifier
                 .padding(paddingValues)
         )
 
@@ -86,7 +98,9 @@ fun AddEditTaskRoute(
 
         LaunchedEffect(uiState.isTaskSaved) {
             if (uiState.isTaskSaved) {
-                onTaskUpdate()
+                navigator.navigate(
+                    TasksRouteDestination(userMessage = if (args.taskId != null) EDIT_RESULT_OK else ADD_RESULT_OK)
+                )
             }
         }
     }

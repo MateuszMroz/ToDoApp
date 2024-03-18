@@ -10,7 +10,7 @@ import com.example.todo.core.AsyncResult.Loading
 import com.example.todo.core.AsyncResult.Success
 import com.example.todo.data.model.Task
 import com.example.todo.data.repository.ITaskRepository
-import com.example.todo.feature.addedit.navigation.TASK_ID_ARG
+import com.example.todo.feature.navArgs
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -26,13 +26,14 @@ class AddEditTaskViewModel @Inject constructor(
     private val taskRepository: ITaskRepository,
     savedStateHandle: SavedStateHandle
 ) : ViewModel() {
-    private val taskId: String? = savedStateHandle[TASK_ID_ARG]
 
-    private val _uiState = MutableStateFlow(AddEditTaskUiState(isLoading = taskId != null))
+    private val args: AddEditTaskArgs = savedStateHandle.navArgs()
+
+    private val _uiState = MutableStateFlow(AddEditTaskUiState(isLoading = args.taskId != null))
     val uiState: StateFlow<AddEditTaskUiState> = _uiState.asStateFlow()
 
     init {
-        if (taskId != null) loadTask(taskId)
+        if (args.taskId != null) loadTask(args.taskId)
     }
 
     private fun loadTask(taskId: String) {
@@ -84,7 +85,7 @@ class AddEditTaskViewModel @Inject constructor(
             if (_uiState.value.title.isBlank() || _uiState.value.description.isBlank()) {
                 _uiState.update { it.copy(userMessage = R.string.empty_task_message) }
             } else {
-                if (taskId != null) updateTask() else createTask()
+                if (args.taskId != null) updateTask() else createTask()
             }
         }
     }
@@ -95,11 +96,11 @@ class AddEditTaskViewModel @Inject constructor(
     }
 
     private suspend fun updateTask() = with(_uiState.value) {
-        if (taskId == null) {
+        if (args.taskId == null) {
             throw RuntimeException("updateTask() was called but task is new.")
         }
 
-        taskRepository.updateTask(taskId, title, description)
+        taskRepository.updateTask(args.taskId, title, description)
         _uiState.update { it.copy(isTaskSaved = true) }
     }
 

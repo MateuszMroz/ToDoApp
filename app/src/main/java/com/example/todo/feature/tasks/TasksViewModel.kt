@@ -4,9 +4,6 @@ import androidx.annotation.StringRes
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.todo.ADD_RESULT_OK
-import com.example.todo.DELETE_RESULT_OK
-import com.example.todo.EDIT_RESULT_OK
 import com.example.todo.R
 import com.example.todo.core.AsyncResult
 import com.example.todo.core.AsyncResult.Error
@@ -17,6 +14,9 @@ import com.example.todo.data.repository.ITaskRepository
 import com.example.todo.feature.tasks.TasksFilterType.ACTIVE
 import com.example.todo.feature.tasks.TasksFilterType.ALL
 import com.example.todo.feature.tasks.TasksFilterType.COMPLETED
+import com.example.todo.feature.util.ADD_RESULT_OK
+import com.example.todo.feature.util.DELETE_RESULT_OK
+import com.example.todo.feature.util.EDIT_RESULT_OK
 import com.example.todo.util.WhileUiSubscribed
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject

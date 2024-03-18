@@ -24,6 +24,7 @@ class StatisticsViewModel
 constructor(
     private val taskRepository: ITaskRepository
 ) : ViewModel() {
+
     val uiState: StateFlow<StatisticUiState> =
         taskRepository.getTasksStream()
             .map { it.toStatistics() }

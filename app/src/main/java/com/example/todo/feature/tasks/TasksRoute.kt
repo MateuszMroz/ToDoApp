@@ -1,5 +1,7 @@
 package com.example.todo.feature.tasks
 
+import android.widget.Toast
+import android.widget.Toast.LENGTH_SHORT
 import androidx.annotation.DrawableRes
 import androidx.annotation.StringRes
 import androidx.compose.foundation.Image
@@ -21,7 +23,7 @@ import androidx.compose.material.Scaffold
 import androidx.compose.material.ScaffoldState
 import androidx.compose.material.Surface
 import androidx.compose.material.Text
-import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.Icons.Rounded
 import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material.rememberScaffoldState
 import androidx.compose.runtime.Composable
@@ -29,6 +31,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -39,42 +42,53 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.todo.R
 import com.example.todo.data.model.Task
+import com.example.todo.feature.ToDoNavGraph
+import com.example.todo.feature.destinations.AddEditTaskRouteDestination
+import com.example.todo.feature.destinations.StatisticRouteDestination
+import com.example.todo.feature.destinations.TaskDetailsRouteDestination
 import com.example.todo.feature.tasks.TasksFilterType.ACTIVE
 import com.example.todo.feature.tasks.TasksFilterType.ALL
 import com.example.todo.feature.tasks.TasksFilterType.COMPLETED
 import com.example.todo.ui.design.RefreshIndicator
 import com.example.todo.ui.design.TaskTopBar
 import com.example.todo.ui.theme.ToDoTheme
+import com.ramcosta.composedestinations.annotation.Destination
+import com.ramcosta.composedestinations.navigation.DestinationsNavigator
 
+@ToDoNavGraph(start = true)
+@Destination
 @Composable
 fun TasksRoute(
-    @StringRes userMessage: Int,
-    onAddTask: () -> Unit,
-    onTaskClick: (Task) -> Unit,
-    openDrawer: () -> Unit,
-    onShowStatistic: () -> Unit,
+    navigator: DestinationsNavigator,
     modifier: Modifier = Modifier,
+    @StringRes userMessage: Int = 0,
     viewModel: TasksViewModel = hiltViewModel(),
     scaffoldState: ScaffoldState = rememberScaffoldState()
 ) {
+    val context = LocalContext.current
+
     Scaffold(
         modifier = modifier.fillMaxSize(),
         scaffoldState = scaffoldState,
         topBar = {
             TaskTopBar(
-                openDrawer = openDrawer,
+                openDrawer = { Toast.makeText(context, "Open Drawer", LENGTH_SHORT).show() },
                 onFilterAllTask = { viewModel.setFiltering(ALL) },
                 onFilterActiveTask = { viewModel.setFiltering(ACTIVE) },
                 onFilterCompletedTask = { viewModel.setFiltering(COMPLETED) },
                 onClearCompletedTasks = { viewModel.clearCompletedTasks() },
                 onRefresh = { viewModel.refresh() },
-                onShowStatistic = onShowStatistic
+                onShowStatistic = { navigator.navigate(StatisticRouteDestination()) }
             )
         },
         floatingActionButton = {
-            FloatingActionButton(onClick = onAddTask) {
+            FloatingActionButton(
+                onClick = {
+                    navigator.navigate(AddEditTaskRouteDestination(title = R.string.add_task))
+                }
+            ) {
                 Icon(
-                    imageVector = Icons.Rounded.Add,
+                    imageVector = Rounded.Add,
                     contentDescription = stringResource(id = R.string.add_task)
                 )
             }
@@ -91,7 +105,7 @@ fun TasksRoute(
             noTasksLabel = uiState.filteringUiInfo.noTaskLabel,
             noTasksIconRes = uiState.filteringUiInfo.noTaskIconRes,
             onRefresh = { viewModel.refresh() },
-            onTaskClick = onTaskClick,
+            onTaskClick = { navigator.navigate(TaskDetailsRouteDestination(it.id)) },
             onTaskCheckedChange = viewModel::completeTask,
             modifier = Modifier.padding(paddingValues)
         )
@@ -112,8 +126,7 @@ fun TasksRoute(
     }
 }
 
-@Composable
-private fun TasksScreen(
+@Composable private fun TasksScreen(
     loading: Boolean,
     tasks: List<Task>,
     empty: Boolean,
@@ -132,8 +145,7 @@ private fun TasksScreen(
         onRefresh = onRefresh
     ) {
         Column(
-            modifier =
-            Modifier
+            modifier = Modifier
                 .fillMaxSize()
                 .padding(
                     horizontal = dimensionResource(id = R.dimen.horizontal_margin),
@@ -143,36 +155,28 @@ private fun TasksScreen(
             Text(
                 text = stringResource(id = currentFilteringLabel),
                 style = MaterialTheme.typography.h6,
-                modifier =
-                Modifier.padding(
+                modifier = Modifier.padding(
                     horizontal = dimensionResource(id = R.dimen.horizontal_margin),
                     vertical = dimensionResource(id = R.dimen.vertical_margin)
                 )
             )
             LazyColumn {
                 items(tasks) { task ->
-                    TaskItem(
-                        task = task,
-                        onTaskClick = { onTaskClick(task) },
-                        onTaskCheckedChange = { onTaskCheckedChange(task, it) }
-                    )
+                    TaskItem(task = task, onTaskClick = { onTaskClick(task) }, onTaskCheckedChange = { onTaskCheckedChange(task, it) })
                 }
             }
         }
     }
 }
 
-@Composable
-private fun TaskItem(task: Task, onTaskClick: (Task) -> Unit, onTaskCheckedChange: (Boolean) -> Unit) {
+@Composable private fun TaskItem(task: Task, onTaskClick: (Task) -> Unit, onTaskCheckedChange: (Boolean) -> Unit) {
     Row(
         verticalAlignment = Alignment.CenterVertically,
-        modifier =
-        Modifier
+        modifier = Modifier
             .fillMaxWidth()
             .padding(
                 horizontal = dimensionResource(id = R.dimen.horizontal_margin),
-                vertical =
-                dimensionResource(
+                vertical = dimensionResource(
                     id = R.dimen.list_item_padding
                 )
             )
@@ -185,8 +189,7 @@ private fun TaskItem(task: Task, onTaskClick: (Task) -> Unit, onTaskCheckedChang
             modifier = Modifier.padding(
                 horizontal = dimensionResource(id = R.dimen.horizontal_margin)
             ),
-            textDecoration =
-            if (task.isCompleted) {
+            textDecoration = if (task.isCompleted) {
                 TextDecoration.LineThrough
             } else {
                 null
@@ -195,8 +198,7 @@ private fun TaskItem(task: Task, onTaskClick: (Task) -> Unit, onTaskCheckedChang
     }
 }
 
-@Composable
-private fun TaskEmptyContent(@StringRes label: Int, @DrawableRes icon: Int, modifier: Modifier = Modifier) {
+@Composable private fun TaskEmptyContent(@StringRes label: Int, @DrawableRes icon: Int, modifier: Modifier = Modifier) {
     Column(
         modifier = modifier.fillMaxSize(),
         verticalArrangement = Arrangement.Center,
@@ -211,14 +213,12 @@ private fun TaskEmptyContent(@StringRes label: Int, @DrawableRes icon: Int, modi
     }
 }
 
-@Preview
-@Composable
+@Preview @Composable
 private fun TaskItemPreview() {
     ToDoTheme {
         Surface {
             TaskItem(
-                task =
-                Task(
+                task = Task(
                     title = "Title 1",
                     description = "Description 1",
                     isCompleted = false,
@@ -231,14 +231,12 @@ private fun TaskItemPreview() {
     }
 }
 
-@Preview
-@Composable
+@Preview @Composable
 private fun TaskItemCompletedPreview() {
     ToDoTheme {
         Surface {
             TaskItem(
-                task =
-                Task(
+                task = Task(
                     title = "Title 2",
                     description = "Description 2",
                     isCompleted = true,
@@ -251,8 +249,7 @@ private fun TaskItemCompletedPreview() {
     }
 }
 
-@Preview
-@Composable
+@Preview @Composable
 private fun TaskEmptyContentPreview() {
     ToDoTheme {
         Surface {
@@ -264,15 +261,13 @@ private fun TaskEmptyContentPreview() {
     }
 }
 
-@Preview
-@Composable
+@Preview @Composable
 private fun TaskContentPreview() {
     ToDoTheme {
         Surface {
             TasksScreen(
                 loading = false,
-                tasks =
-                listOf(
+                tasks = listOf(
                     Task(
                         title = "Title 1",
                         description = "Description 1",

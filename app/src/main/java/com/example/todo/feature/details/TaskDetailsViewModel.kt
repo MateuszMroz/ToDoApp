@@ -10,7 +10,7 @@ import com.example.todo.core.AsyncResult.Loading
 import com.example.todo.core.AsyncResult.Success
 import com.example.todo.data.model.Task
 import com.example.todo.data.repository.ITaskRepository
-import com.example.todo.feature.details.navigation.TASK_ID_ARG
+import com.example.todo.feature.navArgs
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -26,14 +26,14 @@ class TaskDetailsViewModel @Inject constructor(
     private val taskRepository: ITaskRepository,
     savedStateHandle: SavedStateHandle
 ) : ViewModel() {
-    val taskId: String =
-        requireNotNull(savedStateHandle[TASK_ID_ARG]) // check if possible to be private
+
+    private val args: TaskDetailsArgs = savedStateHandle.navArgs()
 
     private val _uiState = MutableStateFlow(TaskDetailsUiState(isLoading = true))
     val uiState: StateFlow<TaskDetailsUiState> = _uiState.asStateFlow()
 
     init {
-        loadTask(taskId)
+        loadTask(args.taskId)
     }
 
     private fun loadTask(taskId: String) {
@@ -91,20 +91,20 @@ class TaskDetailsViewModel @Inject constructor(
 
     fun deleteTask() {
         viewModelScope.launch {
-            taskRepository.deleteTask(taskId)
+            taskRepository.deleteTask(args.taskId)
             _uiState.update { it.copy(isTaskDeleted = true) }
         }
     }
 
     fun refresh() = viewModelScope.launch {
-        taskRepository.refreshTask(taskId)
+        taskRepository.refreshTask(args.taskId)
     }
 
     fun onTaskChecked(checked: Boolean) = viewModelScope.launch {
         if (checked) {
-            taskRepository.completeTask(taskId)
+            taskRepository.completeTask(args.taskId)
         } else {
-            taskRepository.activateTask(taskId)
+            taskRepository.activateTask(args.taskId)
         }
 
         _uiState.update {
